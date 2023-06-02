@@ -1,9 +1,9 @@
 # Intelligent Grimm - Open-ended Visual Storytelling via Latent Diffusion Models
 
-This repository contains the official PyTorch implementation of StoryGen: https://arxiv.org/
+This repository contains the official PyTorch implementation of StoryGen: https://arxiv.org/abs/2306.00973/
 
 ## Some Information
-[Project Page](https://haoningwu3639.github.io/StoryGen_Webpage/)  $\cdot$ [PDF Download](https://arxiv.org/)
+[Project Page](https://haoningwu3639.github.io/StoryGen_Webpage/)  $\cdot$ [PDF Download](https://arxiv.org/abs/2306.00973/)
 
 ## Requirements
 - Python >= 3.8 (Recommend to use [Anaconda](https://www.anaconda.com/download/#linux) or [Miniconda](https://docs.conda.io/en/latest/miniconda.html))
@@ -30,12 +30,12 @@ Coming soon...
 
 ## Citation
 If you use this code for your research or project, please cite:
-
-	@article{liu2023storygen,
-	  title   = {Intelligent Grimm - Open-ended Visual Storytelling via Latent Diffusion Models},
-	  author  = {Liu, Chang and Wu, Haoning and Zhong, Yujie and Zhang, Xiaoyun and Xie, Weidi},
-	  journal = {arXiv:2306.xxxxx},
-	  year    = {2023}
+ 
+	@article{liu2023intelligent,
+      title={Intelligent Grimm -- Open-ended Visual Storytelling via Latent Diffusion Models}, 
+      author={Chang Liu and Haoning Wu and Yujie Zhong and Xiaoyun Zhang and Weidi Xie},
+      year={2023},
+      journal={arXiv preprint arXiv:2306.00973},
 	}
 
 ## Acknowledgements
