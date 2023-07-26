@@ -31,7 +31,7 @@ class SampleLogger:
     def __init__(
         self,
         image_logdir: str,
-        num_samples_per_prompt: int = 2,
+        num_samples_per_prompt: int = 1,
         num_inference_steps: int = 40,
         guidance_scale: float = 7.0,
     ) -> None:
@@ -42,7 +42,7 @@ class SampleLogger:
         os.makedirs(self.image_logdir, exist_ok=True)
         
     def log_sample_images(
-        self, batch, visual_projection, image_encoder, pipeline: StoryGenPipeline, device: torch.device, step: int
+        self, batch, visual_projection, image_encoder, cross_frame_attn, pipeline: StoryGenPipeline, device: torch.device, step: int
     ):
         sample_seeds = torch.randint(0, 100000, (self.num_sample_per_prompt,))
         sample_seeds = sorted(sample_seeds.numpy().tolist())
@@ -73,6 +73,7 @@ class SampleLogger:
                 num_inference_steps=self.num_inference_steps,
                 guidance_scale=self.guidance_scale,
                 num_images_per_prompt=self.num_sample_per_prompt,
+                cross_frame_attn=cross_frame_attn,
             ).images
 
             image = (image + 1.) / 2. # for visualization
@@ -96,7 +97,7 @@ def train(
     gradient_accumulation_steps: int = 10, # important hyper-parameter
     seed: Optional[int] = None,
     mixed_precision: Optional[str] = "fp16",
-    train_batch_size: int = 4,
+    train_batch_size: int = 1,
     val_batch_size: int = 1,
     learning_rate: float = 3e-5,
     scale_lr: bool = False,
@@ -126,19 +127,22 @@ def train(
 
     # Load models and create wrapper
     tokenizer = AutoTokenizer.from_pretrained(pretrained_model_path, subfolder="tokenizer", use_fast=False)
-    text_encoder = CLIPTextModelWithProjection.from_pretrained(pretrained_model_path, subfolder="text_encoder")
-    image_encoder = CLIPVisionModelWithProjection.from_pretrained(pretrained_model_path, subfolder="image_encoder")
     vae = AutoencoderKL.from_pretrained(pretrained_model_path, subfolder="vae")
     scheduler = DDIMScheduler.from_pretrained(pretrained_model_path, subfolder="scheduler")
     noise_scheduler = DDPMScheduler.from_pretrained(pretrained_model_path, subfolder="scheduler")
     
     if not cross_frame_attn: # Stage 1
+        # Initialize the TextEncoder and ImageEncoder from pre-trained CLIP-large
+        text_encoder = CLIPTextModelWithProjection.from_pretrained(pretrained_model_path, subfolder="CLIP")
+        image_encoder = CLIPVisionModelWithProjection.from_pretrained(pretrained_model_path, subfolder="CLIP")
         # Train from scratch
         unet = UNet2DConditionModel.from_config(pretrained_model_path, subfolder="unet")
         # Load StableDiffusion Unet to initialize our StoryGen.
         # Note: LoRA layers have already been initialized to zero in attention.py
         unet.load_SDM_state_dict(torch.load("./ckpt/stable-diffusion-v1-5/unet/diffusion_pytorch_model.bin", map_location="cpu"))
     else: # Stage 2
+        text_encoder = CLIPTextModelWithProjection.from_pretrained(pretrained_model_path, subfolder="text_encoder")
+        image_encoder = CLIPVisionModelWithProjection.from_pretrained(pretrained_model_path, subfolder="image_encoder")
         unet = UNet2DConditionModel.from_pretrained(pretrained_model_path, subfolder="unet")
     
     pipeline = StoryGenPipeline(
@@ -214,8 +218,8 @@ def train(
     
     print(train_dataset.__len__())
     print(val_dataset.__len__())
-    train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=train_batch_size, shuffle=True, num_workers=8)
-    val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=val_batch_size, shuffle=False, num_workers=8)
+    train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=train_batch_size, shuffle=True, num_workers=4)
+    val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=val_batch_size, shuffle=False, num_workers=4)
 
     lr_scheduler = get_scheduler(
         lr_scheduler,
@@ -248,7 +252,7 @@ def train(
     step = 0
 
     if validation_sample_logger is not None and accelerator.is_main_process:
-        validation_sample_logger = SampleLogger(**validation_sample_logger, image_logdir=image_logdir)
+        validation_sample_logger = SampleLogger(**validation_sample_logger, image_logdir=image_logdir, num_samples_per_prompt=val_batch_size)
 
     progress_bar = tqdm(range(step, train_steps), disable=not accelerator.is_local_main_process)
     progress_bar.set_description("Steps")
@@ -257,6 +261,7 @@ def train(
         while True:
             for batch in dataloader:
                 yield batch
+            # If the process is stuck somewhere, try to comment out this line
             accelerator.wait_for_everyone()
 
     train_data_yielder = make_data_yielder(train_dataloader)
@@ -264,7 +269,6 @@ def train(
 
     while step < train_steps:
         batch = next(train_data_yielder)
-        
         vae.eval()
         text_encoder.eval()
         image_encoder.eval()
@@ -320,6 +324,7 @@ def train(
                             batch=val_batch,
                             visual_projection=visual_projection, 
                             image_encoder=image_encoder,
+                            cross_frame_attn=cross_frame_attn,
                             pipeline=pipeline,
                             device=accelerator.device,
                             step=step,
@@ -347,9 +352,9 @@ if __name__ == "__main__":
     parser.add_argument('--training_stage', default=1, type=int)
     args = parser.parse_args()
     if args.training_stage == 1:
-        config = './stage1_config.yml'
+        config = './config/stage1_config.yml'
     elif args.training_stage == 2:
-        config = './stage2_config.yml'
+        config = './config/stage2_config.yml'
     else:
         raise ValueError("Wrong Trainig Stage Hyperparameter!")
     

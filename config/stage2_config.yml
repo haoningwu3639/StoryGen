@@ -12,8 +12,8 @@ seed: 6666
 mixed_precision: 'fp16'
 learning_rate: 1e-5
 cross_frame_attn: True
-train_batch_size: 4
-val_batch_size: 2
+train_batch_size: 1
+val_batch_size: 1
 scale_lr: false
 lr_scheduler: constant
 lr_warmup_steps: 0

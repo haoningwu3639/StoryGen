@@ -282,6 +282,7 @@ class StoryGenPipeline(DiffusionPipeline):
         return_dict: bool = True,
         callback: Optional[Callable[[int, int, torch.FloatTensor], None]] = None,
         callback_steps: Optional[int] = 1,
+        cross_frame_attn: bool = False,
     ):
         r"""
         Function invoked when calling the pipeline for generation.
@@ -380,7 +381,7 @@ class StoryGenPipeline(DiffusionPipeline):
                 latent_model_input = torch.cat([latents] * 2) if do_classifier_free_guidance else latents
                 latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
                 # predict the noise residual
-                noise_pred = self.unet(latent_model_input, t, image_hidden_states=cond, encoder_hidden_states=text_embeddings).sample.to(dtype=latents.dtype)
+                noise_pred = self.unet(latent_model_input, t, cross_frame_attn=cross_frame_attn, image_hidden_states=cond, encoder_hidden_states=text_embeddings).sample.to(dtype=latents.dtype)
                 # perform guidance
                 if do_classifier_free_guidance:
                     noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
