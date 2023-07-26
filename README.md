@@ -29,27 +29,34 @@ Before training, please download pre-trained StableDiffusion-1.5 from [SDM](http
 
 For Stage 1, train the StyleTransfer LoRA layers via:
 ```
-CUDA_VISIBLE_DEVICES=0,1,2,3 accelerate launch --multi_gpu train.py --training_stage 1
+CUDA_VISIBLE_DEVICES=0 accelerate launch train.py --training_stage 1
 ```
 For Stage 2, train the Context Moudle via:
 ```
-CUDA_VISIBLE_DEVICES=0,1,2,3 accelerate launch --multi_gpu train.py --training_stage 2
+CUDA_VISIBLE_DEVICES=0 accelerate launch train.py --training_stage 2
+```
+If you have multiple GPUs to accelerate the training process, you can use:
+```
+CUDA_VISIBLE_DEVICES=0,1,2,3 accelerate launch --multi_gpu train.py --training_stage 1
 ```
 
-
 ## Inference
-Coming soon...
+```
+python inference.py --ref_prompt 'Once upon a time, there is a white cat.' \
+                  --prompt 'One day, the white cat is running in the rain.'
+```
+
 
 ## TODO
 - [x] Model Code
 - [x] Training Code
-- [ ] (Soon) Inference Code
+- [x] Inference Code
 - [ ] (Soon) Dataset Processing Pipeline
 - [ ] (Soon) Meta Data
 
 ## Citation
 If you use this code for your research or project, please cite:
- 
+
 	@article{liu2023intelligent,
       title={Intelligent Grimm -- Open-ended Visual Storytelling via Latent Diffusion Models}, 
       author={Chang Liu and Haoning Wu and Yujie Zhong and Xiaoyun Zhang and Weidi Xie},

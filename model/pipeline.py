@@ -373,7 +373,8 @@ class StoryGenPipeline(DiffusionPipeline):
         # 7. Denoising loop
         num_warmup_steps = len(timesteps) - num_inference_steps * self.scheduler.order
         
-        cond = torch.cat([cond] * 2) if do_classifier_free_guidance else cond
+        if not cond is None:
+            cond = torch.cat([cond] * 2) if do_classifier_free_guidance else cond
         
         with self.progress_bar(total=num_inference_steps) as progress_bar:
             for i, t in enumerate(timesteps):
