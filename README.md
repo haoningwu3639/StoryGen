@@ -21,25 +21,35 @@ conda env create -f environment.yaml
 conda activate storygen
 ```
 
+## Meta Data Preparation
+Coming soon...
+
 ## Data Processing Pipeline
-The data processing pipeline includes three necessary steps: 
-- Extract the keyframes and their corresponding subtitles
-- Remove duplicate frames
-- Segment and remove person frames and headshots.
+The data processing pipeline includes several necessary steps: 
+- Extract the keyframes and their corresponding subtitles;
+- Detect and remove duplicate frames;
+- Segment text, people, and headshots in images; and remove frames that only contain real people;
+- Inpaint the text, headshots and real hands in the frames according to the segmentation mask;
+- (Optional) Use Caption model combined with subtitles to generate a description of each image.
 
 The keyframes and their corresponding subtitles can be extracted via:
 ```
 python ./data_process/extract.py
 ```
 
-The duplicate frames can be removed via:
+The duplicate frames can be detected and removed via:
 ```
 CUDA_VISIBLE_DEVICES=0 python ./data_process/dup_remove.py
 ```
 
-The person frames and headshots can be segmented and removed via:
+The text, people and headshots can be segmented, and the frames that only contain real people are then removed via:
 ```
 python ./data_process/yolov7/human_ocr_mask.py
+```
+
+The text, headshots and real hands in the frames can be inpainted with [SDM-Inpainting](https://github.com/CompVis/stable-diffusion), according to the segmentation mask via:
+```
+CUDA_VISIBLE_DEVICES=0 python ./data_process/SDM/inpaint.py
 ```
 
 Besides, we also provide the code to get story-level paired image-text samples.
@@ -48,10 +58,12 @@ We can align the subtitles with visual frames by using Dynamic Time Warping (DTW
 CUDA_VISIBLE_DEVICES=0 python ./data_process/align.py
 ```
 
-For a more detailed introduction to the data processing pipeline, please refer to ./data_process/README.md and our paper.
+(Optional) You can use [ChatCaptioner](https://github.com/Vision-CAIR/ChatCaptioner/tree/main/ChatCaptioner) to obtain the caption of each image via:
+```
+CUDA_VISIBLE_DEVICES=0 python ./data_process/ChatCaptioner/main_caption.py
+```
 
-## Dataset Preparation
-Coming soon...
+For a more detailed introduction to the data processing pipeline, please refer to `./data_process/README.md` and our paper.
 
 ## Training
 Before training, please download pre-trained StableDiffusion-1.5 from [SDM](https://huggingface.co/runwayml/stable-diffusion-v1-5/tree/main) (including vae, scheduler, tokenizer and unet). Besides, please download pre-trained CLIP-vit-large from [CLIP](https://huggingface.co/openai/clip-vit-large-patch14/tree/main) (pytorch_model.bin is required.) Then, all the pre-trained checkpoints should be placed into the corresponding location in the folder `./ckpt/stable-diffusion-v1-5/`
@@ -75,13 +87,13 @@ python inference.py --ref_prompt 'Once upon a time, there is a white cat.' \
                   --prompt 'One day, the white cat is running in the rain.'
 ```
 
-
 ## TODO
 - [x] Model Code
 - [x] Training Code
 - [x] Inference Code
-- [ ] (Soon) Dataset Processing Pipeline
+- [x] Dataset Processing Pipeline
 - [ ] (Soon) Meta Data
+- [ ] (TBD) Release Checkpoints
 
 ## Citation
 If you use this code for your research or project, please cite:

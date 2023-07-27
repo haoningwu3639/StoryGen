@@ -52,7 +52,7 @@ def main(args):
     
     for blip2_tag, blip2 in blip2s.items():
         for img_path in tqdm(video_image_list):
-            text_path = img_path.replace('image_inpainted_finally_checked', 'text_caption')[:-4] + '.txt'
+            text_path = img_path.replace('image', 'text_caption')[:-4] + '.txt'
             img = Image.open(img_path)
     
             try:
