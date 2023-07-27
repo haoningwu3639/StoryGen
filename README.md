@@ -21,6 +21,35 @@ conda env create -f environment.yaml
 conda activate storygen
 ```
 
+## Data Processing Pipeline
+The data processing pipeline includes three necessary steps: 
+- Extract the keyframes and their corresponding subtitles
+- Remove duplicate frames
+- Segment and remove person frames and headshots.
+
+The keyframes and their corresponding subtitles can be extracted via:
+```
+python ./data_process/extract.py
+```
+
+The duplicate frames can be removed via:
+```
+CUDA_VISIBLE_DEVICES=0 python ./data_process/dup_remove.py
+```
+
+The person frames and headshots can be segmented and removed via:
+```
+python ./data_process/yolov7/human_ocr_mask.py
+```
+
+Besides, we also provide the code to get story-level paired image-text samples.
+We can align the subtitles with visual frames by using Dynamic Time Warping (DTW) algorithm via:
+```
+CUDA_VISIBLE_DEVICES=0 python ./data_process/align.py
+```
+
+For a more detailed introduction to the data processing pipeline, please refer to ./data_process/README.md and our paper.
+
 ## Dataset Preparation
 Coming soon...
 

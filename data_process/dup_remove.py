@@ -4,7 +4,7 @@ import torch
 from PIL import Image
 from torchvision import transforms
 
-video_path = 'image'
+save_path = 'image'
 
 transform = transforms.Compose([
         transforms.Resize(256, interpolation=3),
@@ -51,8 +51,8 @@ def image_dedup_reg(image_path):
 
 if __name__ == '__main__':
 
-    for video_no in sorted(os.listdir(video_path)):
-        image_path = video_path + "/" + video_no
+    for video_no in sorted(os.listdir(save_path)):
+        image_path = save_path + "/" + video_no
         try:
             with torch.no_grad():
                 image_dedup_reg(image_path)
