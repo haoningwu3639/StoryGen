@@ -52,7 +52,7 @@ Please git clone the SDM-Inpainting repository and place it to `./SDM`, download
 ## Align the subtitles with visual frames
 
 We also provide the code to get story-level paired image-text samples.
-We can align the subtitles with visual frames by using Dynamic Time Warping (DTW) algorithm via:
+We can align the subtitles with visual frames by using Dynamic Time Warping(DTW) algorithm via:
 ```
 CUDA_VISIBLE_DEVICES=0 python ./data_process/align.py
 ```

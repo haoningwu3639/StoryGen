@@ -3,7 +3,7 @@
 This repository contains the official PyTorch implementation of StoryGen: https://arxiv.org/abs/2306.00973/
 
 ## Some Information
-[Project Page](https://haoningwu3639.github.io/StoryGen_Webpage/)  $\cdot$ [PDF Download](https://arxiv.org/abs/2306.00973/) $\cdot$ Dataset (Coming Soon)
+[Project Page](https://haoningwu3639.github.io/StoryGen_Webpage/)  $\cdot$ [PDF Download](https://arxiv.org/abs/2306.00973/) $\cdot$ [Dataset](https://drive.google.com/file/d/1rz57PZHNCDCxU3x2jx6zqxn6IfxNC23E/view?usp=sharing)
 
 ## Requirements
 - Python >= 3.8 (Recommend to use [Anaconda](https://www.anaconda.com/download/#linux) or [Miniconda](https://docs.conda.io/en/latest/miniconda.html))
@@ -22,7 +22,7 @@ conda activate storygen
 ```
 
 ## Meta Data Preparation
-We provide the metadata of our StorySalon dataset in ./data/metadata.json. It includes the id, name, url, duration and the keyframe list after filtering of the videos.
+We provide the metadata of our StorySalon dataset in `./data/metadata.json`. It includes the id, name, url, duration and the keyframe list after filtering of the videos.
 
 To download these videos, we recommend to use [youtube-dl](https://github.com/yt-dlp/yt-dlp) via:
 ```
@@ -62,7 +62,7 @@ CUDA_VISIBLE_DEVICES=0 python ./data_process/SDM/inpaint.py
 ```
 
 Besides, we also provide the code to get story-level paired image-text samples.
-We can align the subtitles with visual frames by using Dynamic Time Warping (DTW) algorithm via:
+We can align the subtitles with visual frames by using Dynamic Time Warping(DTW) algorithm via:
 ```
 CUDA_VISIBLE_DEVICES=0 python ./data_process/align.py
 ```
