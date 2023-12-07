@@ -2,6 +2,9 @@
 
 This repository contains the official PyTorch implementation of StoryGen: https://arxiv.org/abs/2306.00973/
 
+
+# We will update our latest code and dataset soon!
+
 ## Some Information
 [Project Page](https://haoningwu3639.github.io/StoryGen_Webpage/)  $\cdot$ [PDF Download](https://arxiv.org/abs/2306.00973/) $\cdot$ [Dataset](https://drive.google.com/file/d/1rz57PZHNCDCxU3x2jx6zqxn6IfxNC23E/view?usp=sharing)
 
@@ -97,11 +100,11 @@ python inference.py --ref_prompt 'Once upon a time, there is a white cat.' \
 ```
 
 ## TODO
-- [x] Model Code
-- [x] Training Code
-- [x] Inference Code
+- [x] Model & Training & Inference Code
 - [x] Dataset Processing Pipeline
 - [x] Meta Data
+- [ ] (Soon) Code Update
+- [ ] (Soon) Data Update
 - [ ] (TBD) Release Checkpoints
 
 ## Citation
