@@ -1,4 +1,4 @@
-# Intelligent Grimm - Open-ended Visual Storytelling via Latent Diffusion Models
+# Intelligent Grimm - Open-ended Visual Storytelling via Latent Diffusion Models (CVPR 2024)
 
 This repository contains the official PyTorch implementation of StoryGen: https://arxiv.org/abs/2306.00973/
 
@@ -103,22 +103,22 @@ python inference.py --ref_prompt 'Once upon a time, there is a white cat.' \
 - [x] Model & Training & Inference Code
 - [x] Dataset Processing Pipeline
 - [x] Meta Data
-- [ ] (Soon) Code Update
-- [ ] (Soon) Data Update
-- [ ] (TBD) Release Checkpoints
+- [ ] (Very Soon) Code Update
+- [ ] (Very Soon) Data Update
+- [ ] (Very Soon) Release Checkpoints
 
 ## Citation
 If you use this code for your research or project, please cite:
 
-	@article{liu2023intelligent,
-      title={Intelligent Grimm -- Open-ended Visual Storytelling via Latent Diffusion Models}, 
-      author={Chang Liu and Haoning Wu and Yujie Zhong and Xiaoyun Zhang and Weidi Xie},
-      year={2023},
-      journal={arXiv preprint arXiv:2306.00973},
+	@inproceedings{liu2023intelligent,
+      title     = {Intelligent Grimm -- Open-ended Visual Storytelling via Latent Diffusion Models}, 
+      author    = {Chang Liu, Haoning Wu, Yujie Zhong, Xiaoyun Zhang, Yanfeng Wang, Weidi Xie},
+      booktitle = {The IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+      year      = {2024},
 	}
 
 ## Acknowledgements
-Many thanks to the code bases from [diffusers](https://github.com/huggingface/diffusers) and [Tune-A-Video](https://github.com/showlab/Tune-A-Video).
+Many thanks to the code bases from [diffusers](https://github.com/huggingface/diffusers) and [SimpleSDM](https://github.com/haoningwu3639/SimpleSDM).
 
 ## Contact
 If you have any question, please feel free to contact haoningwu3639@gmail.com or liuchang666@sjtu.edu.cn.
