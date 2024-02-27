@@ -110,7 +110,7 @@ python inference.py --ref_prompt 'Once upon a time, there is a white cat.' \
 ## Citation
 If you use this code for your research or project, please cite:
 
-	@inproceedings{liu2023intelligent,
+	@inproceedings{liu2024intelligent,
       title     = {Intelligent Grimm -- Open-ended Visual Storytelling via Latent Diffusion Models}, 
       author    = {Chang Liu, Haoning Wu, Yujie Zhong, Xiaoyun Zhang, Yanfeng Wang, Weidi Xie},
       booktitle = {The IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
