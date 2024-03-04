@@ -1,6 +1,7 @@
 # code mostly taken from https://github.com/huggingface/diffusers
 import inspect
 from typing import Callable, List, Optional, Union
+from collections import defaultdict
 
 import torch
 from diffusers.pipeline_utils import DiffusionPipeline
@@ -11,21 +12,21 @@ from diffusers.schedulers import (DDIMScheduler, DPMSolverMultistepScheduler,
                                   PNDMScheduler)
 from diffusers.utils import is_accelerate_available, logging
 from einops import rearrange
-from transformers import CLIPTokenizer, CLIPTextModelWithProjection, CLIPVisionModelWithProjection
+from transformers import CLIPTextModel, CLIPTokenizer
 from diffusers import AutoencoderKL
 from model.unet_2d_condition import UNet2DConditionModel
 
 logger = logging.get_logger(__name__)
 
-class StoryGenPipeline(DiffusionPipeline):
+
+class StableDiffusionPipeline(DiffusionPipeline):
     r"""
-    Pipeline for StoryGen.
+    Pipeline for Stable Diffusion.
     """
     def __init__(
         self,
         vae: AutoencoderKL,
-        text_encoder: CLIPTextModelWithProjection,
-        image_encoder: CLIPVisionModelWithProjection,
+        text_encoder: CLIPTextModel,
         tokenizer: CLIPTokenizer,
         unet: UNet2DConditionModel,
         scheduler: Union[
@@ -42,7 +43,6 @@ class StoryGenPipeline(DiffusionPipeline):
         self.register_modules(
             vae=vae,
             text_encoder=text_encoder,
-            image_encoder=image_encoder,
             tokenizer=tokenizer,
             unet=unet,
             scheduler=scheduler,
@@ -89,6 +89,7 @@ class StoryGenPipeline(DiffusionPipeline):
     ):
         r"""
         Encodes the prompt into text encoder hidden states.
+
         Args:
             prompt (`str` or `list(int)`):
                 prompt to be encoded
@@ -133,7 +134,9 @@ class StoryGenPipeline(DiffusionPipeline):
         else:
             attention_mask = None
 
-        text_embeddings = self.text_encoder(text_input_ids.to(device), attention_mask=attention_mask).last_hidden_state
+        text_embeddings = self.text_encoder(text_input_ids.to(device), attention_mask=attention_mask)
+        text_embeddings = text_embeddings[0]
+        
         # duplicate text embeddings for each generation per prompt, using mps friendly method
         bs_embed, seq_len, _ = text_embeddings.shape
         text_embeddings = text_embeddings.repeat(1, num_images_per_prompt, 1)
@@ -177,7 +180,9 @@ class StoryGenPipeline(DiffusionPipeline):
             else:
                 attention_mask = None
 
-            uncond_embeddings = self.text_encoder(uncond_input.input_ids.to(device), attention_mask=attention_mask).last_hidden_state
+            uncond_embeddings = self.text_encoder(uncond_input.input_ids.to(device), attention_mask=attention_mask)
+            uncond_embeddings = uncond_embeddings[0]
+
             # duplicate unconditional embeddings for each generation per prompt, using mps friendly method
             seq_len = uncond_embeddings.shape[1]
             uncond_embeddings = uncond_embeddings.repeat(1, num_images_per_prompt, 1)
@@ -185,13 +190,14 @@ class StoryGenPipeline(DiffusionPipeline):
 
             # For classifier free guidance, we need to do two forward passes.
             # Here we concatenate the unconditional and text embeddings into a single batch to avoid doing two forward passes
+            # text_embeddings = torch.cat([uncond_embeddings, text_embeddings])
             text_embeddings = torch.cat([uncond_embeddings, text_embeddings])
 
         return text_embeddings
 
     def decode_latents(self, latents):
         b = latents.shape[0]
-        latents = latents / 0.18215 
+        latents = 1 / 0.18215 * latents
         image = self.vae.decode(latents).sample
         image = (image / 2 + 0.5).clamp(0, 1)
         image = rearrange(image, "b c h w -> b h w c", b=b)
@@ -267,12 +273,15 @@ class StoryGenPipeline(DiffusionPipeline):
     @torch.no_grad()
     def __call__(
         self,
-        cond,
+        stage: str,
         prompt: Union[str, List[str]],
+        image_prompt: Optional[torch.FloatTensor] = None,
+        prev_prompt: Optional[Union[str, List[str]]] = None,
         height: Optional[int] = None,
         width: Optional[int] = None,
         num_inference_steps: int = 50,
         guidance_scale: float = 7.5,
+        image_guidance_scale: float = 3.5,
         negative_prompt: Optional[Union[str, List[str]]] = None,
         num_images_per_prompt: Optional[int] = 1,
         eta: float = 0.0,
@@ -282,10 +291,10 @@ class StoryGenPipeline(DiffusionPipeline):
         return_dict: bool = True,
         callback: Optional[Callable[[int, int, torch.FloatTensor], None]] = None,
         callback_steps: Optional[int] = 1,
-        cross_frame_attn: bool = False,
     ):
         r"""
         Function invoked when calling the pipeline for generation.
+
         Args:
             prompt (`str` or `List[str]`):
                 The prompt or prompts to guide the image generation.
@@ -348,6 +357,10 @@ class StoryGenPipeline(DiffusionPipeline):
 
         # 3. Encode input prompt
         text_embeddings = self._encode_prompt(prompt, device, num_images_per_prompt, do_classifier_free_guidance, negative_prompt)
+        prev_text_embeddings = [] #[3 x (B,2,77,768)]
+        for p_prompt in prev_prompt:
+            prev_text_embeddings.append(self._encode_prompt(p_prompt, device, num_images_per_prompt, do_classifier_free_guidance, negative_prompt))
+        
 
         # 4. Prepare timesteps
         self.scheduler.set_timesteps(num_inference_steps, device=device)
@@ -365,28 +378,81 @@ class StoryGenPipeline(DiffusionPipeline):
             device,
             generator,
             latents
-        )
+        )# [B,4,64,64]
         
         # 6. Prepare extra step kwargs.
         extra_step_kwargs = self.prepare_extra_step_kwargs(generator, eta)
 
+        # 6.5 Prepare image condition with VAE
+        image_prompt = image_prompt.to(device=device, dtype=latents.dtype) # (B,3,3,512,512)
+        t_image_prompts = torch.transpose(image_prompt, 0, 1) # (3, b, 3, 512, 512)
+        ref_image_num = t_image_prompts.shape[0]
+        
+        zero_image_prompt = t_image_prompts[0] * 0
+        zero_image_prompt = self.vae.encode(zero_image_prompt).latent_dist.sample()
+        zero_image_prompt = zero_image_prompt * 0.18215 # [B,4,64,64]
+        zero_image_prompt = zero_image_prompt.repeat(num_images_per_prompt, 1, 1, 1)
+        zero_image_prompts = []
+        for i in range(ref_image_num):
+            zero_image_prompts.append(zero_image_prompt) #[3 x (B,4,64,64)]
+
+        image_prompts = [] #[3 x (B,4,64,64)]
+        for t_image_prompt in t_image_prompts:
+            new_image_prompt = self.vae.encode(t_image_prompt).latent_dist.sample()
+            new_image_prompt = new_image_prompt * 0.18215 # [B,4,64,64]
+            new_image_prompt = new_image_prompt.repeat(num_images_per_prompt, 1, 1, 1)
+            image_prompts.append(new_image_prompt)       
+        
         # 7. Denoising loop
         num_warmup_steps = len(timesteps) - num_inference_steps * self.scheduler.order
-        
-        if not cond is None:
-            cond = torch.cat([cond] * 2) if do_classifier_free_guidance else cond
+
+        noise = torch.randn_like(image_prompts[0])
         
         with self.progress_bar(total=num_inference_steps) as progress_bar:
             for i, t in enumerate(timesteps):
+                # Small noise
+                ref_t = t / 10
+                ref_t = ref_t.long()
+
+                img_conditions = []
+                for i in range(ref_image_num):
+                    if stage == 'auto-regressive':
+                        noisy_image_prompt = self.scheduler.add_noise(image_prompts[i], noise, ref_t * (ref_image_num - i))
+                        noisy_zero_image_prompt = self.scheduler.add_noise(zero_image_prompts[i], noise, ref_t * (ref_image_num - i))
+                    elif stage == 'multi-image-condition':
+                        noisy_image_prompt = self.scheduler.add_noise(image_prompts[i], noise, ref_t)
+                        noisy_zero_image_prompt = self.scheduler.add_noise(zero_image_prompts[i], noise, ref_t)
+                    else:
+                        noisy_image_prompt = image_prompts[i]
+                        noisy_zero_image_prompt = zero_image_prompts[i]
+                    
+                    noisy_image_prompt = torch.cat([noisy_zero_image_prompt, noisy_image_prompt, noisy_image_prompt]) if do_classifier_free_guidance else noisy_image_prompt # [3B,4,64,64]
+                    p_text_embeddings = torch.cat([prev_text_embeddings[i], prev_text_embeddings[i][num_images_per_prompt:]]) if do_classifier_free_guidance else prev_text_embeddings
+                                    
+                    if stage == 'multi-image-condition':
+                        img_dif_condition = self.unet(noisy_image_prompt, ref_t, encoder_hidden_states=p_text_embeddings, return_dict=False)[1]
+                    elif stage == 'auto-regressive':
+                        img_dif_condition =  self.unet(noisy_image_prompt, ref_t * (ref_image_num - i), encoder_hidden_states=p_text_embeddings, return_dict=False)[1]
+                    else:
+                        img_dif_condition = None
+                    img_conditions.append(img_dif_condition)
+
+                img_dif_conditions = {}
+                for k,v in img_conditions[0].items():
+                    img_dif_conditions[k] = torch.cat([img_condition[k] for img_condition in img_conditions], dim=1)
+                
                 # expand the inputs if we are doing classifier free guidance
-                latent_model_input = torch.cat([latents] * 2) if do_classifier_free_guidance else latents
+                t_embeddings = torch.cat([text_embeddings[:num_images_per_prompt], text_embeddings]) if do_classifier_free_guidance else text_embeddings
+
+                latent_model_input = torch.cat([latents] * 3) if do_classifier_free_guidance else latents
                 latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
                 # predict the noise residual
-                noise_pred = self.unet(latent_model_input, t, cross_frame_attn=cross_frame_attn, image_hidden_states=cond, encoder_hidden_states=text_embeddings).sample.to(dtype=latents.dtype)
+                noise_pred = self.unet(latent_model_input, t, encoder_hidden_states=t_embeddings,image_hidden_states=img_dif_conditions, return_dict=False)[0].to(dtype=latents.dtype)
+                # noise_pred = self.unet(latent_model_input, t, encoder_hidden_states=t_embeddings,image_hidden_states=None).sample.to(dtype=latents.dtype)
                 # perform guidance
                 if do_classifier_free_guidance:
-                    noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
-                    noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_text - noise_pred_uncond)
+                    noise_pred_uncond, noise_pred_image, noise_pred_all = noise_pred.chunk(3)
+                    noise_pred = noise_pred_uncond + image_guidance_scale * (noise_pred_image - noise_pred_uncond)  + guidance_scale * (noise_pred_all - noise_pred_image)
 
                 # compute the previous noisy sample x_t -> x_t-1
                 latents = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs).prev_sample

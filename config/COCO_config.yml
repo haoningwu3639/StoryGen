@@ -1,5 +1,5 @@
-pretrained_model_path: "./stage1_log/"
-logdir: "./stage2_log/"
+pretrained_model_path: "./ckpt/stable-diffusion-v1-5/"
+logdir: "./COCO_log/"
 validation_sample_logger:
     num_inference_steps: 40
     guidance_scale: 7

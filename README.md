@@ -3,10 +3,8 @@
 This repository contains the official PyTorch implementation of StoryGen: https://arxiv.org/abs/2306.00973/
 
 
-# We will update our latest code and dataset soon!
-
 ## Some Information
-[Project Page](https://haoningwu3639.github.io/StoryGen_Webpage/)  $\cdot$ [PDF Download](https://arxiv.org/abs/2306.00973/) $\cdot$ [Dataset](https://drive.google.com/file/d/1rz57PZHNCDCxU3x2jx6zqxn6IfxNC23E/view?usp=sharing)
+[Project Page](https://haoningwu3639.github.io/StoryGen_Webpage/)  $\cdot$ [Paper](https://arxiv.org/abs/2306.00973/) $\cdot$ [Dataset](https://huggingface.co/datasets/haoningwu/StorySalon) $\cdot$ [Checkpoint](https://huggingface.co/haoningwu/StoryGen)
 
 ## Requirements
 - Python >= 3.8 (Recommend to use [Anaconda](https://www.anaconda.com/download/#linux) or [Miniconda](https://docs.conda.io/en/latest/miniconda.html))
@@ -32,9 +30,9 @@ To download these videos, we recommend to use [youtube-dl](https://github.com/yt
 youtube-dl --write-auto-sub -o 'file\%(title)s.%(ext)s' -f 135 [url]
 ```
 
-The keyframes extracted with the following data processing pipeline(step 1) can be filtered according to the keyframe list provided in the metadata to avoid manually selection.
+The keyframes extracted with the following data processing pipeline (step 1) can be filtered according to the keyframe list provided in the metadata to avoid manually selection.
 
-The corresponding masks, story-level description and visual description can be extracted with the following data processing pipeline or downloaded from [here](https://drive.google.com/file/d/1rz57PZHNCDCxU3x2jx6zqxn6IfxNC23E/view?usp=sharing).
+The corresponding masks, story-level description and visual description can be extracted with the following data processing pipeline or downloaded from [here](https://huggingface.co/datasets/haoningwu/StorySalon).
 
 ## Data Processing Pipeline
 The data processing pipeline includes several necessary steps: 
@@ -70,7 +68,13 @@ We can align the subtitles with visual frames by using Dynamic Time Warping(DTW)
 CUDA_VISIBLE_DEVICES=0 python ./data_process/align.py
 ```
 
-(Optional) You can use [ChatCaptioner](https://github.com/Vision-CAIR/ChatCaptioner/tree/main/ChatCaptioner) to obtain the caption of each image via:
+(Optional) You can use [TextBind](https://github.com/SihengLi99/TextBind) or [MiniGPT-v2](https://github.com/Vision-CAIR/MiniGPT-4) to obtain the caption of each image via:
+```
+CUDA_VISIBLE_DEVICES=0 python ./data_process/TextBind/main_caption.py
+CUDA_VISIBLE_DEVICES=0 python ./data_process/MiniGPT-v2/main_caption.py
+```
+
+(Discarded) Previous method: You can also use [ChatCaptioner](https://github.com/Vision-CAIR/ChatCaptioner/tree/main/ChatCaptioner) to obtain the caption of each image via:
 ```
 CUDA_VISIBLE_DEVICES=0 python ./data_process/ChatCaptioner/main_caption.py
 ```
@@ -78,32 +82,40 @@ CUDA_VISIBLE_DEVICES=0 python ./data_process/ChatCaptioner/main_caption.py
 For a more detailed introduction to the data processing pipeline, please refer to `./data_process/README.md` and our paper.
 
 ## Training
-Before training, please download pre-trained StableDiffusion-1.5 from [SDM](https://huggingface.co/runwayml/stable-diffusion-v1-5/tree/main) (including vae, scheduler, tokenizer and unet). Besides, please download pre-trained CLIP-vit-large from [CLIP](https://huggingface.co/openai/clip-vit-large-patch14/tree/main) (pytorch_model.bin is required.) Then, all the pre-trained checkpoints should be placed into the corresponding location in the folder `./ckpt/stable-diffusion-v1-5/`
+Before training, please download pre-trained StableDiffusion-1.5 from [SDM](https://huggingface.co/runwayml/stable-diffusion-v1-5/tree/main) (including vae, scheduler, tokenizer and unet). Then, all the pre-trained checkpoints should be placed into the corresponding location in the folder `./ckpt/stable-diffusion-v1-5/`
 
-For Stage 1, train the StyleTransfer LoRA layers via:
+For Stage 1, pre-train the self-attention layers in SDM for StyleTransfer via:
 ```
-CUDA_VISIBLE_DEVICES=0 accelerate launch train.py --training_stage 1
+CUDA_VISIBLE_DEVICES=0 accelerate launch train_StorySalon_stage1.py
 ```
-For Stage 2, train the Context Moudle via:
+
+For Stage 2, train the Visual-Language Context Moudle via:
+
 ```
-CUDA_VISIBLE_DEVICES=0 accelerate launch train.py --training_stage 2
+CUDA_VISIBLE_DEVICES=0 accelerate launch train_StorySalon_stage2.py
 ```
+
+For replicating the experiments on MS-COCO, train via:
+
+```
+CUDA_VISIBLE_DEVICES=0 accelerate launch train_COCO.py
+```
+
 If you have multiple GPUs to accelerate the training process, you can use:
 ```
-CUDA_VISIBLE_DEVICES=0,1,2,3 accelerate launch --multi_gpu train.py --training_stage 1
+CUDA_VISIBLE_DEVICES=0,1,2,3 accelerate launch --multi_gpu train_StorySalon_stage2.py
 ```
 
 ## Inference
 ```
-python inference.py --ref_prompt 'Once upon a time, there is a white cat.' \
-                  --prompt 'One day, the white cat is running in the rain.'
+CUDA_VISIBLE_DEVICES=0 accelerate launch inference.py
 ```
 
 ## TODO
 - [x] Model & Training & Inference Code
 - [x] Dataset Processing Pipeline
 - [x] Meta Data
-- [ ] (Very Soon) Code Update
+- [x] Code Update
 - [ ] (Very Soon) Data Update
 - [ ] (Very Soon) Release Checkpoints
 

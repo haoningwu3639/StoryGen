@@ -29,6 +29,7 @@ class UNet2DConditionOutput(BaseOutput):
             Hidden states conditioned on `encoder_hidden_states` input. Output of last layer of model.
     """
     sample: torch.FloatTensor
+    img_dif_conditions: dict
 
 
 class UNet2DConditionModel(ModelMixin, ConfigMixin):
@@ -104,7 +105,6 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
         norm_num_groups: Optional[int] = 32,
         norm_eps: float = 1e-5,
         cross_attention_dim: int = 1280,
-        cross_frame_attention_dim: int = 768,
         attention_head_dim: Union[int, Tuple[int]] = 8,
         use_linear_projection: bool = False,
         class_embed_type: Optional[str] = None,
@@ -118,6 +118,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
         super().__init__()
 
         self.sample_size = sample_size
+
         # input
         conv_in_padding = (conv_in_kernel - 1) // 2
         self.conv_in = nn.Conv2d(in_channels, block_out_channels[0], kernel_size=conv_in_kernel, padding=conv_in_padding)
@@ -180,7 +181,6 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
                 resnet_act_fn=act_fn,
                 resnet_groups=norm_num_groups,
                 cross_attention_dim=cross_attention_dim,
-                cross_frame_attention_dim=cross_frame_attention_dim,
                 attn_num_head_channels=attention_head_dim[i],
                 downsample_padding=downsample_padding,
                 use_linear_projection=use_linear_projection,
@@ -200,7 +200,6 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
                 output_scale_factor=mid_block_scale_factor,
                 resnet_time_scale_shift=resnet_time_scale_shift,
                 cross_attention_dim=cross_attention_dim,
-                cross_frame_attention_dim=cross_frame_attention_dim,
                 attn_num_head_channels=attention_head_dim[-1],
                 resnet_groups=norm_num_groups,
                 use_linear_projection=use_linear_projection,
@@ -246,7 +245,6 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
                 resnet_act_fn=act_fn,
                 resnet_groups=norm_num_groups,
                 cross_attention_dim=cross_attention_dim,
-                cross_frame_attention_dim=cross_frame_attention_dim,
                 attn_num_head_channels=reversed_attention_head_dim[i],
                 use_linear_projection=use_linear_projection,
                 only_cross_attention=only_cross_attention[i],
@@ -320,7 +318,8 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
                 raise ValueError(f"size {size} has to be smaller or equal to {dim}.")
 
         # Recursively walk through all the children.
-        # Any children which exposes the set_attention_slice method gets the message
+        # Any children which exposes the set_attention_slice method
+        # gets the message
         def fn_recursive_set_attention_slice(module: torch.nn.Module, slice_size: List[int]):
             if hasattr(module, "set_attention_slice"):
                 module.set_attention_slice(slice_size.pop())
@@ -340,9 +339,8 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
         self,
         sample: torch.FloatTensor,
         timestep: Union[torch.Tensor, float, int],
-        cross_frame_attn: bool = False,
-        image_hidden_states: torch.Tensor = None,
-        encoder_hidden_states: torch.Tensor = None,
+        encoder_hidden_states: torch.Tensor,
+        image_hidden_states: Optional[torch.Tensor] = None,
         class_labels: Optional[torch.Tensor] = None,
         cross_attention_kwargs: Optional[Dict[str, Any]] = None,
         return_dict: bool = True,
@@ -412,18 +410,23 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
         # 2. pre-process
         sample = self.conv_in(sample)
 
+        # 2.5 image diffusion condition dictionary
+        image_dif_conditions = {}
+
         # 3. down
         down_block_res_samples = (sample,)
-        for downsample_block in self.down_blocks:
+        for i, downsample_block in enumerate(self.down_blocks):
             if hasattr(downsample_block, "has_cross_attention") and downsample_block.has_cross_attention:
-                sample, res_samples = downsample_block(
+                sample, res_samples, down_img_dif_conditions = downsample_block(
                     hidden_states=sample,
                     temb=emb,
-                    cross_frame_attn=cross_frame_attn,
                     image_hidden_states=image_hidden_states,
                     encoder_hidden_states=encoder_hidden_states,
                     cross_attention_kwargs=cross_attention_kwargs,
                 )
+                if len(down_img_dif_conditions)> 0:
+                    image_dif_conditions["down_"+str(i+1)+'_1']=down_img_dif_conditions[0].clone()
+                    image_dif_conditions["down_"+str(i+1)+'_2']=down_img_dif_conditions[1].clone()
             else:
                 sample, res_samples = downsample_block(hidden_states=sample, temb=emb)
 
@@ -431,14 +434,15 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
 
         # 4. mid
         if self.mid_block is not None:
-            sample = self.mid_block(
+            sample, mid_img_dif_conditions = self.mid_block(
                 sample,
                 emb,
-                cross_frame_attn=cross_frame_attn,
                 image_hidden_states=image_hidden_states,
                 encoder_hidden_states=encoder_hidden_states,
                 cross_attention_kwargs=cross_attention_kwargs,
             )
+            if len(mid_img_dif_conditions)> 0:
+                    image_dif_conditions["mid"]=mid_img_dif_conditions[0].clone()
 
         # 5. up
         for i, upsample_block in enumerate(self.up_blocks):
@@ -451,16 +455,20 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
                 upsample_size = down_block_res_samples[-1].shape[2:]
 
             if hasattr(upsample_block, "has_cross_attention") and upsample_block.has_cross_attention:
-                sample = upsample_block(
+                sample, up_img_dif_conditions = upsample_block(
                     hidden_states=sample,
                     temb=emb,
-                    cross_frame_attn=cross_frame_attn,
                     res_hidden_states_tuple=res_samples,
                     image_hidden_states=image_hidden_states,
                     encoder_hidden_states=encoder_hidden_states,
                     cross_attention_kwargs=cross_attention_kwargs,
                     upsample_size=upsample_size,
                 )
+                if len(up_img_dif_conditions)> 0:
+                    image_dif_conditions["up_"+str(i)+'_1']=up_img_dif_conditions[0].clone()
+                    image_dif_conditions["up_"+str(i)+'_2']=up_img_dif_conditions[1].clone()
+                    image_dif_conditions["up_"+str(i)+'_3']=up_img_dif_conditions[2].clone()
+
             else:
                 sample = upsample_block(
                     hidden_states=sample, temb=emb, res_hidden_states_tuple=res_samples, upsample_size=upsample_size
@@ -472,18 +480,32 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin):
         sample = self.conv_out(sample)
 
         if not return_dict:
-            return (sample,)
+            return (sample,image_dif_conditions)
 
-        return UNet2DConditionOutput(sample=sample)
-    
+        return UNet2DConditionOutput(sample=sample, img_dif_conditions=image_dif_conditions)
+
     def load_SDM_state_dict(self, state_dict_SDM, **kwargs):
+        to_delete = []
         state_dict = self.state_dict()
-        for k, v in state_dict.items(): # Skip the LoRA layers, we have zero-initialized in attention.py
-            if "add_q_proj" in k or "add_k_proj" in k or "add_v_proj" in k or "add_out_proj" in k :
-                continue
+        for k, v in state_dict_SDM.items():
+            if k not in state_dict:
+                to_delete.append(k)
+                raise KeyError(f"SDM state_dict key {k} does not exist in model")
+            elif v.shape != state_dict[k].shape:
+                print(f"state_dict shape mismatch, SDM {v.shape}, our {state_dict[k].shape}")
+                to_delete.append(k)
+                # raise ValueError(f"state_dict shape mismatch, SDM {v.shape}, our {state_dict[k].shape}")
+        for k in to_delete:
+            del state_dict_SDM[k]
+            
+        for k, v in state_dict.items():
             if k not in state_dict_SDM:
-                k_temp = k.replace("_cross", "")
+                k_temp = k.replace("attn3", "attn1")
+                k_temp = k_temp.replace("norm4", "norm1")
                 state_dict_SDM[k] = state_dict_SDM[k_temp]
-                # print(f"state_dict key {k} does not exist in SDM model")
+                print(f"state_dict key {k} is initialized with self attention.")
+                
+
         state_dict.update(state_dict_SDM)
         self.load_state_dict(state_dict, **kwargs)
+    
