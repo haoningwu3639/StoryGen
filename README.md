@@ -23,6 +23,7 @@ conda activate storygen
 ```
 
 ## Meta Data Preparation
+#### Data from YouTube
 We provide the metadata of our StorySalon dataset in `./data/metadata.json`. It includes the id, name, url, duration and the keyframe list after filtering of the videos.
 
 To download these videos, we recommend to use [youtube-dl](https://github.com/yt-dlp/yt-dlp) via:
@@ -33,6 +34,9 @@ youtube-dl --write-auto-sub -o 'file\%(title)s.%(ext)s' -f 135 [url]
 The keyframes extracted with the following data processing pipeline (step 1) can be filtered according to the keyframe list provided in the metadata to avoid manually selection.
 
 The corresponding masks, story-level description and visual description can be extracted with the following data processing pipeline or downloaded from [here](https://huggingface.co/datasets/haoningwu/StorySalon).
+
+#### Data from Open-source Libraries
+For the open-source PDF data, you can directly download the frames, corresponding masks, description and narrative from [StorySalon](https://huggingface.co/datasets/haoningwu/StorySalon).
 
 ## Data Processing Pipeline
 The data processing pipeline includes several necessary steps: 
@@ -116,8 +120,9 @@ CUDA_VISIBLE_DEVICES=0 accelerate launch inference.py
 - [x] Dataset Processing Pipeline
 - [x] Meta Data
 - [x] Code Update
+- [x] Release Checkpoints
 - [ ] (Very Soon) Data Update
-- [ ] (Very Soon) Release Checkpoints
+
 
 ## Citation
 If you use this code for your research or project, please cite:

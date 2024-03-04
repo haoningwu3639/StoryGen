@@ -60,7 +60,19 @@ CUDA_VISIBLE_DEVICES=0 python ./data_process/align.py
 [txt_path](https://github.com/haoningwu3639/StoryGen/blob/f30602498a37a3df1036e1c3a3097d7cd2a1920d/data_process/align.py#L18) is the path to store the extracted corresponding relationship between keyframes and subtitles.
 
 ## (Optional) Use Caption model combined with subtitles to generate a description of each image
-You can use [ChatCaptioner](https://github.com/Vision-CAIR/ChatCaptioner/tree/main/ChatCaptioner) to obtain the caption of each image via:
+You can use [TextBind](https://github.com/SihengLi99/TextBind) to obtain the caption of each image via:
+```
+CUDA_VISIBLE_DEVICES=0 python ./data_process/TextBind/main_caption.py
+```
+Please git clone the TextBind repository and place it to `./TextBind`, download the required checkpoints, and use our script `./TextBind/main_caption.py` to generate description.
+
+You can also use [MiniGPT-v2](https://github.com/Vision-CAIR/MiniGPT-4) to obtain the caption of each image via: 
+```
+CUDA_VISIBLE_DEVICES=0 python ./data_process/MiniGPT-v2/main_caption.py
+```
+Please git clone the MiniGPT-v2 repository and place it to `./MiniGPT-v2`, download the required checkpoints, and use our script `./MiniGPT-v2/main_caption.py` to generate description.
+
+(Discarded) Previous Method: You can use [ChatCaptioner](https://github.com/Vision-CAIR/ChatCaptioner/tree/main/ChatCaptioner) to obtain the caption of each image via:
 ```
 CUDA_VISIBLE_DEVICES=0 python ./data_process/ChatCaptioner/main_caption.py
 ```
