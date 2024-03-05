@@ -2,6 +2,9 @@
 
 This repository contains the official PyTorch implementation of StoryGen: https://arxiv.org/abs/2306.00973/
 
+<div align="center">
+   <img src="./teaser.png">
+</div>
 
 ## Some Information
 [Project Page](https://haoningwu3639.github.io/StoryGen_Webpage/)  $\cdot$ [Paper](https://arxiv.org/abs/2306.00973/) $\cdot$ [Dataset](https://huggingface.co/datasets/haoningwu/StorySalon) $\cdot$ [Checkpoint](https://huggingface.co/haoningwu/StoryGen)
@@ -121,8 +124,12 @@ CUDA_VISIBLE_DEVICES=0 accelerate launch inference.py
 - [x] Meta Data
 - [x] Code Update
 - [x] Release Checkpoints
-- [ ] (Very Soon) Data Update
+- [x] Data Update
 
+## License
+The code and checkpoints in this repository are under MIT license.
+The open-source books in the StorySalon dataset come from multiple online open-source libraies (please refer to the Appendix of our paper for more details), and they are all under CC-BY 4.0 license.
+It should be noted that, for the data extracted from the video data, we only provide YouTube URLs and data processing pipelines, if you wish to use them for commercial purposes, we recommend that you must obey the relevant regulations of YouTube.
 
 ## Citation
 If you use this code for your research or project, please cite:
