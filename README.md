@@ -27,14 +27,14 @@ conda activate storygen
 
 ## Meta Data Preparation
 #### Data from YouTube
-We provide the metadata of our StorySalon dataset in `./data/metadata.json`. It includes the id, name, url, duration and the keyframe list after filtering of the videos.
+We provide the metadata of our StorySalon dataset in `./data/metadata.json`. It includes the id, name, url, duration and the keyframe list after filtering the videos.
 
 To download these videos, we recommend to use [youtube-dl](https://github.com/yt-dlp/yt-dlp) via:
 ```
 youtube-dl --write-auto-sub -o 'file\%(title)s.%(ext)s' -f 135 [url]
 ```
 
-The keyframes extracted with the following data processing pipeline (step 1) can be filtered according to the keyframe list provided in the metadata to avoid manually selection.
+The keyframes extracted with the following data processing pipeline (step 1) can be filtered according to the keyframe list provided in the metadata to avoid manual selection.
 
 The corresponding masks, story-level description and visual description can be extracted with the following data processing pipeline or downloaded from [here](https://huggingface.co/datasets/haoningwu/StorySalon).
 
@@ -96,7 +96,7 @@ For Stage 1, pre-train the self-attention layers in SDM for StyleTransfer via:
 CUDA_VISIBLE_DEVICES=0 accelerate launch train_StorySalon_stage1.py
 ```
 
-For Stage 2, train the Visual-Language Context Moudle via:
+For Stage 2, train the Visual-Language Context Module via:
 
 ```
 CUDA_VISIBLE_DEVICES=0 accelerate launch train_StorySalon_stage2.py
@@ -128,8 +128,8 @@ CUDA_VISIBLE_DEVICES=0 accelerate launch inference.py
 
 ## License
 The code and checkpoints in this repository are under MIT license.
-The open-source books in the StorySalon dataset come from multiple online open-source libraies (please refer to the Appendix of our paper for more details), and they are all under CC-BY 4.0 license.
-It should be noted that, for the data extracted from the video data, we only provide YouTube URLs and data processing pipelines, if you wish to use them for commercial purposes, we recommend that you must obey the relevant regulations of YouTube.
+The open-source books in the StorySalon dataset come from multiple online open-source libraries (please refer to the Appendix of our paper for more details), and they are all under CC-BY 4.0 license.
+It should be noted that, for the data extracted from the video data, we only provide YouTube URLs and data processing pipelines, if you wish to use them for commercial purposes, we recommend that you obey the relevant regulations of YouTube.
 
 ## Citation
 If you use this code for your research or project, please cite:
@@ -145,4 +145,4 @@ If you use this code for your research or project, please cite:
 Many thanks to the code bases from [diffusers](https://github.com/huggingface/diffusers) and [SimpleSDM](https://github.com/haoningwu3639/SimpleSDM).
 
 ## Contact
-If you have any question, please feel free to contact haoningwu3639@gmail.com or liuchang666@sjtu.edu.cn.
+If you have any questions, please feel free to contact haoningwu3639@gmail.com or liuchang666@sjtu.edu.cn.
