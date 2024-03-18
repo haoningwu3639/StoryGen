@@ -38,7 +38,7 @@ def test(
     logdir += f"_{time_string}"
     
     if not os.path.exists(logdir):
-        os.mkdir(logdir)
+        os.makedirs(logdir)
     accelerator = Accelerator(mixed_precision=mixed_precision)
 
     tokenizer = AutoTokenizer.from_pretrained(pretrained_model_path, subfolder="tokenizer", use_fast=False)

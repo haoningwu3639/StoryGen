@@ -56,7 +56,7 @@ def test():
     mixed_precision = "fp16"
 
     if not os.path.exists(logdir):
-        os.mkdir(logdir)
+        os.makedirs(logdir)
         
     accelerator = Accelerator(mixed_precision=mixed_precision)
 
