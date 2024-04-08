@@ -437,9 +437,12 @@ class StableDiffusionPipeline(DiffusionPipeline):
                         img_dif_condition = None
                     img_conditions.append(img_dif_condition)
 
-                img_dif_conditions = {}
-                for k,v in img_conditions[0].items():
-                    img_dif_conditions[k] = torch.cat([img_condition[k] for img_condition in img_conditions], dim=1)
+                if stage == 'multi-image-condition' or stage == 'auto-regressive':
+                  img_dif_conditions = {}
+                  for k,v in img_conditions[0].items():
+                      img_dif_conditions[k] = torch.cat([img_condition[k] for img_condition in img_conditions], dim=1)
+                else:
+                  img_dif_conditions = None
                 
                 # expand the inputs if we are doing classifier free guidance
                 t_embeddings = torch.cat([text_embeddings[:num_images_per_prompt], text_embeddings]) if do_classifier_free_guidance else text_embeddings
