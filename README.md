@@ -118,6 +118,15 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 accelerate launch --multi_gpu train_StorySalon_stag
 CUDA_VISIBLE_DEVICES=0 accelerate launch inference.py
 ```
 
+## About the Testset
+Regarding the test set in our StorySalon dataset, some researchers have reported that they are unable to obtain corresponding test data through our data processing pipeline due to certain YouTube videos being taken down.
+
+To address this issue, we have provided pre-processed test datasets for download via [Google Drive](https://drive.google.com/file/d/1o4ZzFyc4rTEFnud9FGhlTVftkw9QoJOp/view) or [HuggingFace](https://huggingface.co/datasets/haoningwu/StorySalon/blob/main/testset.zip), which can be used for testing and benchmarking purposes.
+
+In consideration of potential copyright risks associated with YouTube videos, we have not directly included the original video content.
+
+Please feel free to contact us if you have any questions regarding this part.
+
 ## TODO
 - [x] Model & Training & Inference Code
 - [x] Dataset Processing Pipeline
@@ -125,6 +134,7 @@ CUDA_VISIBLE_DEVICES=0 accelerate launch inference.py
 - [x] Code Update
 - [x] Release Checkpoints
 - [x] Data Update
+- [x] Share links for testset
 
 ## License
 The code and checkpoints in this repository are under MIT license.
