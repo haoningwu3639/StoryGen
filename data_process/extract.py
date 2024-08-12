@@ -172,7 +172,5 @@ if __name__ == '__main__':
             save_i_keyframes(v_path, save_id, s_path)
                                     
             video_id += 1
-        if video_id >=2:
-            break
 
 # python extract.py
