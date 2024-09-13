@@ -144,12 +144,14 @@ It should be noted that, for the data extracted from the video data, we only pro
 ## Citation
 If you use this code for your research or project, please cite:
 
-	@inproceedings{liu2024intelligent,
-      title     = {Intelligent Grimm -- Open-ended Visual Storytelling via Latent Diffusion Models}, 
-      author    = {Chang Liu, Haoning Wu, Yujie Zhong, Xiaoyun Zhang, Yanfeng Wang, Weidi Xie},
-      booktitle = {The IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
-      year      = {2024},
-	}
+      @inproceedings{liu2024intelligent,
+            title     = {Intelligent Grimm-Open-ended Visual Storytelling via Latent Diffusion Models},
+            author    = {Liu, Chang and Wu, Haoning and Zhong, Yujie and Zhang, Xiaoyun and Wang, Yanfeng and Xie, Weidi},
+            booktitle = {The IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+            pages     = {6190--6200},
+            year      = {2024}
+      }
+
 
 ## Acknowledgements
 Many thanks to the code bases from [diffusers](https://github.com/huggingface/diffusers) and [SimpleSDM](https://github.com/haoningwu3639/SimpleSDM).
