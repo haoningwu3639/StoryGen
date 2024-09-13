@@ -145,7 +145,7 @@ It should be noted that, for the data extracted from the video data, we only pro
 If you use this code for your research or project, please cite:
 
       @inproceedings{liu2024intelligent,
-            title     = {Intelligent Grimm-Open-ended Visual Storytelling via Latent Diffusion Models},
+            title     = {Intelligent Grimm - Open-ended Visual Storytelling via Latent Diffusion Models},
             author    = {Liu, Chang and Wu, Haoning and Zhong, Yujie and Zhang, Xiaoyun and Wang, Yanfeng and Xie, Weidi},
             booktitle = {The IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
             pages     = {6190--6200},
