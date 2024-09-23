@@ -89,7 +89,7 @@ CUDA_VISIBLE_DEVICES=0 python ./data_process/ChatCaptioner/main_caption.py
 For a more detailed introduction to the data processing pipeline, please refer to `./data_process/README.md` and our paper.
 
 ## Training
-Before training, please download pre-trained StableDiffusion-1.5 from [SDM](https://huggingface.co/runwayml/stable-diffusion-v1-5/tree/main) (including vae, scheduler, tokenizer and unet). Then, all the pre-trained checkpoints should be placed into the corresponding location in the folder `./ckpt/stable-diffusion-v1-5/`
+Before training, please download pre-trained StableDiffusion-1.5 from [SDM](https://huggingface.co/stable-diffusion-v1-5/stable-diffusion-v1-5) (including vae, scheduler, tokenizer and unet). Then, all the pre-trained checkpoints should be placed into the corresponding location in the folder `./ckpt/stable-diffusion-v1-5/`
 
 For Stage 1, pre-train the self-attention layers in SDM for StyleTransfer via:
 ```
