@@ -144,12 +144,13 @@ It should be noted that, for the data extracted from the video data, we only pro
 ## Citation
 If you use this code for your research or project, please cite:
 
-      @inproceedings{liu2024intelligent,
-            title     = {Intelligent Grimm - Open-ended Visual Storytelling via Latent Diffusion Models},
+      @InProceedings{Liu_2024_CVPR,
             author    = {Liu, Chang and Wu, Haoning and Zhong, Yujie and Zhang, Xiaoyun and Wang, Yanfeng and Xie, Weidi},
-            booktitle = {The IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
-            pages     = {6190--6200},
-            year      = {2024}
+            title     = {Intelligent Grimm - Open-ended Visual Storytelling via Latent Diffusion Models},
+            booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+            month     = {June},
+            year      = {2024},
+            pages     = {6190-6200}
       }
 
 
